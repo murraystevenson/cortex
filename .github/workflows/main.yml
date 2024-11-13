@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'splitOrderedCompile'
   pull_request:
     branches:
       - main
