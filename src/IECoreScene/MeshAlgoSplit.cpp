@@ -611,7 +611,7 @@ private:
 
 		m_indicesComputed = true;
 
-		std::cout << "COMPUTE INDICES\n";
+		std::cout << "COMPUTE INDICES" << std::endl;
 
 
 		m_numIdsUsed = 0;
@@ -640,12 +640,12 @@ private:
 			int blockId = id / m_blockSize;
 			int subIndex = id % m_blockSize;
 
-			std::cout << id << " : " << (*m_fromOldIds[ blockId ])[subIndex] << "\n";
+			std::cout << id << " : " << (*m_fromOldIds[ blockId ])[subIndex] << std::endl;
 			id = (*m_fromOldIds[ blockId ])[subIndex];
 
 		}
 
-		std::cout << "DONE COMPUTE INDICES\n";
+		std::cout << "DONE COMPUTE INDICES" << std::endl;
 
 
 		std::vector<int> debugIds;
