@@ -611,6 +611,11 @@ private:
 
 		m_indicesComputed = true;
 
+		std::cout << "COMPUTE INDICES\n";
+
+
+		m_numIdsUsed = 0;
+
 		for( unsigned int blockId = 0; blockId < m_fromOldIds.size(); blockId++ )
 		{
 			auto &block = m_fromOldIds[ blockId ];
@@ -629,13 +634,55 @@ private:
 			}
 		}
 
+
 		for( int &id : m_newIndices )
 		{
 			int blockId = id / m_blockSize;
 			int subIndex = id % m_blockSize;
 
+			std::cout << id << " : " << (*m_fromOldIds[ blockId ])[subIndex] << "\n";
 			id = (*m_fromOldIds[ blockId ])[subIndex];
+
 		}
+
+		std::cout << "DONE COMPUTE INDICES\n";
+
+
+		std::vector<int> debugIds;
+
+		for( unsigned int blockId = 0; blockId < m_fromOldIds.size(); blockId++ )
+		{
+			auto &block = m_fromOldIds[ blockId ];
+			if( !block )
+			{
+				continue;
+			}
+
+			for( int i = 0; i < m_blockSize; i++ )
+			{
+				if( (*block)[i] != -1 )
+				{
+					debugIds.push_back( (*block)[i] );
+				}
+			}
+		}
+
+		bool failed = false;
+		for( int i = 0; i < (int)debugIds.size(); i++ )
+		{
+			failed |= debugIds[i] != i;
+		}
+
+		if( failed )
+		{
+			std::string message;
+			for( int i = 0; i < (int)debugIds.size(); i++ )
+			{
+				message += std::to_string( debugIds[ i ] ) + " ";
+			}
+			throw IECore::Exception( "BAD IDS " + message );
+		}
+
 	}
 
 	// IntVectorData to hold the new indices
@@ -867,6 +914,24 @@ MeshPrimitivePtr IECoreScene::MeshAlgo::MeshSplitter::mesh( int segmentId, const
 	Canceller::check( canceller );
 	std::vector<int> vertRemapBackwards;
 	vertReindexer.getDataRemapping( vertRemapBackwards );
+
+	bool failure = false;
+	for( int i = startIndex; i < endIndex; i++ )
+    {
+        int originalFaceIndex = m_faceRemap[i];
+        int faceVerts = sourceVerticesPerFace[ originalFaceIndex ];
+        int faceStart = m_faceIndices[ originalFaceIndex ];
+        for( int j = 0; j < faceVerts; j++ )
+        {
+			int q = sourceVertexIds[ faceStart + j ];
+			failure |= vertRemapBackwards[ vertReindexer.testIndex( q ) ] != q;
+        }
+    }
+
+	if( failure )
+	{
+		throw IECore::Exception( "detected" );
+	}
 
 	MeshPrimitivePtr ret = new MeshPrimitive( verticesPerFaceData, vertReindexer.getNewIndices(), m_mesh->interpolation() );
 
