@@ -166,6 +166,7 @@ jobs:
       env:
         IECORE_RTLD_GLOBAL: 0
         OCIO: ${{ env.CORTEX_BUILD_NAME }}/openColorIO/config.ocio
+      shell: bash
 
     - name: Build Package
       run: |
