@@ -2154,6 +2154,13 @@ if doConfigure :
 			]
 		)
 
+		# replace boost_python with USD's internal equivalent if defined
+		pxrVersionHeader = env.FindFile( "pxr/pxr.h", dependencyIncludes )
+		if pxrVersionHeader is not None :
+			if "#define PXR_USE_INTERNAL_BOOST_PYTHON\n" in open( str( pxrVersionHeader ) ) :
+				usdEnv.Replace( LIBS = [ x for x in usdEnv["LIBS"] if not x == "boost_python" + boostPythonLibSuffix ] )
+				usdEnv.Append( LIBS = [ usdEnv["USD_LIB_PREFIX"] + "python" ] )
+
 		if haveVDB :
 			usdEnv.Prepend( **vdbEnvPrepends )
 			usdEnv.Append(
