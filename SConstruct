@@ -2094,6 +2094,13 @@ else :
 		"work"
 	]
 
+if env["PLATFORM"] == "win32" :
+	pxrVersionHeader = env.FindFile( "pxr/pxr.h", dependencyIncludes )
+	print( pxrVersionHeader )
+	if pxrVersionHeader is not None and "#define PXR_USE_INTERNAL_BOOST_PYTHON\n" in open( str( pxrVersionHeader ) ) :
+		usdLibs.append( "python" )
+		print( usdLibs )
+
 if usdEnv["USD_LIB_PREFIX"] :
 	usdLibs = [ usdEnv["USD_LIB_PREFIX"] + x for x in usdLibs ]
 
@@ -2101,6 +2108,8 @@ usdEnvAppends = {
 	"CXXFLAGS" : [
 		"-Wno-deprecated" if env["PLATFORM"] != "win32" else "",
 		"/Zc:inline-" if env["PLATFORM"] == "win32" else "",
+		# This warning is already disabled generally for release builds,
+		# but also requires disabling for debug builds with USD.
 		"/wd4702" if env["PLATFORM"] == "win32" else "",
 		"-DIECoreUSD_EXPORTS",
 		systemIncludeArgument, "$USD_INCLUDE_PATH",
@@ -2154,17 +2163,6 @@ if doConfigure :
 				os.path.basename( sceneEnv.subst( "$INSTALL_LIB_NAME" ) ),
 			]
 		)
-
-		# replace boost_python with USD's internal equivalent if defined
-		pxrVersionHeader = env.FindFile( "pxr/pxr.h", dependencyIncludes )
-		if pxrVersionHeader is not None and "#define PXR_USE_INTERNAL_BOOST_PYTHON\n" in open( str( pxrVersionHeader ) ) :
-			usdEnv.Replace(
-				LIBS = [
-					usdEnv["USD_LIB_PREFIX"] + "python" if x == "boost_python" + boostPythonLibSuffix else x
-					for x in usdEnv["LIBS"]
-				]
-			)
-			print( usdEnv["LIBS"] )
 
 		if haveVDB :
 			usdEnv.Prepend( **vdbEnvPrepends )
