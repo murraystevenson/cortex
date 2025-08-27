@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'ciPlatformWindowsFix'
   pull_request:
     branches:
       - main
