@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'removeTBBTask'
   pull_request:
     branches:
       - main
