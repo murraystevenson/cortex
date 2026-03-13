@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'cortex*prep'
   pull_request:
     branches:
       - main
