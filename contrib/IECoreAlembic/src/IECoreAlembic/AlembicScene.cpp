@@ -1125,7 +1125,7 @@ class AlembicScene::AlembicReader : public AlembicIO
 					tbb::this_task_arena::isolate(
 						[&] {
 							tbb::task_group_context taskGroupContext( tbb::task_group_context::isolated );
-							pathMatcher = recurseReadCamerasSet( taskGroupContext, canceller );
+							pathMatcher = recurseReadCamerasSet( m_archive->getTop(), /* isXform = */ false, taskGroupContext, canceller );
 						}
 					);
 				}
@@ -1296,36 +1296,55 @@ class AlembicScene::AlembicReader : public AlembicIO
 			}
 		}
 
-		IECore::PathMatcher recurseReadCamerasSet( tbb::task_group_context &taskGroupContext, const Canceller *canceller ) const
+		static IECore::PathMatcher recurseReadCamerasSet( const IObject &object, bool isXform, tbb::task_group_context &taskGroupContext, const Canceller *canceller )
 		{
 			Canceller::check( canceller );
 
 			PathMatcher result;
-			tbb::spin_mutex m;
 
-			if( m_objectReader && Alembic::AbcGeom::ICamera::matches( m_objectReader->object().getMetaData() ) )
+			std::vector<size_t> xformChildren;
+			// Objects parented directly to the top of the archive aren't
+			// visible in the scene, so we don't consider them.
+			bool haveObject = !isXform;
+			for( size_t i = 0, s = object.getNumChildren(); i < s; ++i )
 			{
-				result.addPath( std::vector<IECore::InternedString>() );
+				const AbcA::ObjectHeader &childHeader = object.getChildHeader( i );
+				if( IXform::matches( childHeader ) )
+				{
+					xformChildren.push_back( i );
+				}
+				else if( !haveObject )
+				{
+					// Matches the AlembicReader constructor, which uses the
+					// first non-xform child as the object.
+					haveObject = true;
+					if( Alembic::AbcGeom::ICamera::matches( childHeader ) )
+					{
+						result.addPath( std::vector<IECore::InternedString>() );
+					}
+				}
 			}
 
-			NameList children;
-			childNames( children );
+			if( xformChildren.empty() )
+			{
+				return result;
+			}
 
+			tbb::spin_mutex m;
 			tbb::parallel_for(
 
-				tbb::blocked_range<size_t>( 0, children.size() ),
+				tbb::blocked_range<size_t>( 0, xformChildren.size() ),
 
 				[&]( const tbb::blocked_range<size_t> &r )
 				{
 					for( size_t i = r.begin(); i != r.end(); ++i )
 					{
-						auto &childName = children[i];
-						ConstAlembicIOPtr c = child( childName, SceneInterface::ThrowIfMissing );
-						PathMatcher childSet = static_cast<const AlembicReader *>( c.get() )->recurseReadCamerasSet( taskGroupContext, canceller );
+						const IObject child = object.getChild( xformChildren[i] );
+						PathMatcher childSet = recurseReadCamerasSet( child, /* isXform = */ true, taskGroupContext, canceller );
 						if( !childSet.isEmpty() )
 						{
 							tbb::spin_mutex::scoped_lock lock( m );
-							result.addPaths( childSet, { childName } );
+							result.addPaths( childSet, { IECore::InternedString( child.getName() ) } );
 						}
 					}
 				},
