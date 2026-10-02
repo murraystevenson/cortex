@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'boost188'
   pull_request:
     branches:
       - main
