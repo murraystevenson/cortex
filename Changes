@@ -21,7 +21,7 @@ Build
 -----
 
 - C++ : Updated to C++20.
-- CI : Updated to GafferHQ/dependencies 12.0.0a3.
+- CI : Updated to GafferHQ/dependencies 12.0.0a4.
 - GCC : Updated to 14.2.1 for Linux `platform26` builds.
 - Windows : Updated Windows SDK to version 10.0.22621.0.
 
