@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - 'RB-*'
+      - 'deps12a4'
   pull_request:
     branches:
       - main
